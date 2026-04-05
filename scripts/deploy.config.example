@@ -1,11 +1,11 @@
 # Copy to deploy.config and edit (deploy.config is gitignored — do not commit secrets)
 #   cp scripts/deploy.config.example scripts/deploy.config
 
-# Server SSH host (hostname or IP)
-DEPLOY_HOST=43.160.235.100
+# Server SSH host (hostname or IP). Value below is RFC 5737 documentation-only — replace with yours.
+DEPLOY_HOST=198.51.100.1
 
-# SSH login user
-DEPLOY_USER=root
+# SSH login user (use a dedicated account in production when possible)
+DEPLOY_USER=deploy
 
 # Project root on the server (must exist, e.g. mkdir -p /home/project/task)
 DEPLOY_PATH=/home/project/task
