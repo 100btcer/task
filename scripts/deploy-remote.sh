@@ -6,6 +6,7 @@ set -euo pipefail
 
 TS_DIR="${DEPLOY_PATH}/backend-ts"
 GO_DIR="${DEPLOY_PATH}/backend-go"
+FRONTEND_DIR="${DEPLOY_PATH}/frontend"
 LEGACY_TS_DIR="${DEPLOY_PATH}/api-server"
 FRONTEND_DIST_DIR="${DEPLOY_PATH}/frontend-dist"
 STORE_DIR="${DEPLOY_PATH}/store"
@@ -17,6 +18,11 @@ fi
 
 if [[ ! -d "$GO_DIR" ]]; then
   echo "error: missing $GO_DIR — run deploy from your laptop first."
+  exit 1
+fi
+
+if [[ ! -d "$FRONTEND_DIR" ]]; then
+  echo "error: missing $FRONTEND_DIR — run deploy from your laptop first."
   exit 1
 fi
 
@@ -37,6 +43,10 @@ fi
 echo "[remote] npm ci --omit=dev (backend-ts)"
 cd "$TS_DIR"
 npm ci --omit=dev
+
+echo "[remote] npm ci (frontend)"
+cd "$FRONTEND_DIR"
+npm ci
 
 echo "[remote] go mod download + build (backend-go)"
 cd "$GO_DIR"
@@ -83,20 +93,21 @@ if command -v pm2 >/dev/null 2>&1; then
       pm2 start "$GO_DIR/bin/backend-go" --name task-api-go --cwd "$GO_DIR" --interpreter none --update-env
   fi
 
-  echo "[remote] pm2 restart/start task-frontend"
+  echo "[remote] pm2 replace/start task-frontend -> vite preview"
   if pm2 describe task-frontend >/dev/null 2>&1; then
-    pm2 restart task-frontend --update-env
-  else
-    pm2 serve "$FRONTEND_DIST_DIR" 5173 --name task-frontend --spa
+    pm2 delete task-frontend
   fi
+  pm2 start npm --name task-frontend --cwd "$FRONTEND_DIR" -- run preview -- --host 0.0.0.0 --port 5173
 
   pm2 save
   echo "[remote] health checks"
+  curl -I -sS http://127.0.0.1:5173/ | sed -n '1,20p'
+  printf '\n---\n'
+  curl -I -sS http://127.0.0.1:5173/api/docs | sed -n '1,20p'
+  printf '\n---\n'
   curl -sS "http://127.0.0.1:${TS_PORT}/api/health"
   printf '\n---\n'
   curl -sS "http://127.0.0.1:${GO_PORT}/api/health"
-  printf '\n---\n'
-  curl -I -sS http://127.0.0.1:5173/ | sed -n '1,20p'
   echo "[remote] done. Check: pm2 logs task-api / task-api-go / task-frontend"
 else
   echo "[remote] pm2 not installed. Run: npm i -g pm2 then redeploy."

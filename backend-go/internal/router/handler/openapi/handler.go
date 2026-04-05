@@ -39,11 +39,13 @@ func openAPIServersForRequest(c *gin.Context) []map[string]interface{} {
 		proto = strings.TrimSpace(strings.Split(xf, ",")[0])
 		proto = strings.TrimSuffix(proto, ":")
 	}
+	forwardedHost := strings.TrimSpace(strings.Split(c.GetHeader("X-Forwarded-Host"), ",")[0])
 	host := c.Request.Host
-	if xh := c.GetHeader("X-Forwarded-Host"); xh != "" {
-		host = strings.TrimSpace(strings.Split(xh, ",")[0])
+	if forwardedHost != "" {
+		host = forwardedHost
 	}
 	h := hostForOpenAPIServers(host)
+
 	return []map[string]interface{}{
 		{"url": fmt.Sprintf("%s://%s:3000/api", proto, h), "description": "Node.js (backend-ts, port 3000)"},
 		{"url": fmt.Sprintf("%s://%s:3001/api", proto, h), "description": "Go (backend-go, port 3001)"},

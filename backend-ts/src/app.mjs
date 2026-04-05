@@ -45,19 +45,21 @@ function openApiHostname(hostHeader) {
 }
 
 /**
- * Two backends: Node :3000 and Go :3001 — Swagger UI can switch "Try it out" target.
+ * OpenAPI `servers`: only the two real APIs (:3000 Node, :3001 Go).
+ * Uses `X-Forwarded-Host` (if set) so the hostname matches deployment (e.g. public IP), not 127.0.0.1.
  * @param {import('express').Request} req
  */
 function openApiServersForRequest(req) {
   const forwardedProto = req.get('x-forwarded-proto');
   const proto = (forwardedProto?.split(',')[0]?.trim() || req.protocol || 'http').replace(/:$/, '');
-  const forwardedHost = req.get('x-forwarded-host');
+  const forwardedHost = req.get('x-forwarded-host')?.split(',')[0]?.trim() || '';
   const hostHeader =
-    forwardedHost?.split(',')[0]?.trim() || req.get('host') || `127.0.0.1:${process.env.PORT || 3000}`;
+    forwardedHost || req.get('host') || `127.0.0.1:${process.env.PORT || 3000}`;
   let hostname = openApiHostname(hostHeader);
   if (hostname.includes(':') && !hostname.startsWith('[')) {
     hostname = `[${hostname}]`;
   }
+
   return [
     { url: `${proto}://${hostname}:3000/api`, description: 'Node.js (backend-ts, port 3000)' },
     { url: `${proto}://${hostname}:3001/api`, description: 'Go (backend-go, port 3001)' },

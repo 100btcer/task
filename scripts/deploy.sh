@@ -81,7 +81,14 @@ rsync -avz --delete \
   "$REPO_ROOT/backend-go/" \
   "$SSH_TARGET:${DEPLOY_PATH}/backend-go/"
 
-echo "==> Sync frontend static build -> ${DEPLOY_PATH}/frontend-dist"
+echo "==> Sync frontend build -> ${DEPLOY_PATH}/frontend/dist"
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "mkdir -p '${DEPLOY_PATH}/frontend/dist'"
+rsync -avz --delete \
+  -e "$RSYNC_RSH" \
+  "$REPO_ROOT/frontend/dist/" \
+  "$SSH_TARGET:${DEPLOY_PATH}/frontend/dist/"
+
+echo "==> Sync frontend static build mirror -> ${DEPLOY_PATH}/frontend-dist"
 rsync -avz --delete \
   -e "$RSYNC_RSH" \
   "$REPO_ROOT/frontend/dist/" \
@@ -91,7 +98,8 @@ echo "==> Remote: install/build backend-ts/backend-go and restart services"
 ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "export DEPLOY_PATH='${DEPLOY_PATH}'; bash -s" <"$SCRIPT_DIR/deploy-remote.sh"
 
 echo ""
-echo "Done. Nginx root should point at ${DEPLOY_PATH}/frontend-dist and proxy /api/ to backend-ts (see scripts/nginx-task.example.conf)"
+echo "Done. Frontend is served directly from ${DEPLOY_PATH}/frontend via vite preview on port 5173."
 echo "Health checks:"
-echo "  curl -s http://${DEPLOY_HOST}/api/health"
+echo "  curl -s http://${DEPLOY_HOST}:5173/"
+echo "  curl -s http://${DEPLOY_HOST}:5173/api/health"
 echo "  curl -s http://${DEPLOY_HOST}:3001/api/health"

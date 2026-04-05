@@ -6,7 +6,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { apiClient, getApiErrorMessage } from '../api';
 import { AuthModal, type AuthModalTab } from '../components/AuthModal';
 import { useToast } from '../components/ToastProvider';
@@ -33,7 +32,6 @@ function parseAuthResponse(data: unknown): { token: string; username: string } |
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const queryClient = useQueryClient();
   const toast = useToast();
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TASKS_AUTH_TOKEN_KEY));
   const [username, setUsername] = useState<string | null>(() => localStorage.getItem(USER_KEY));
@@ -49,10 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem(TASKS_AUTH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    setToken(null);
-    setUsername(null);
-    queryClient.invalidateQueries({ queryKey: ['tasks'] });
-  }, [queryClient]);
+    window.location.reload();
+  }, []);
 
   const openAuthModal = useCallback((tab: AuthModalTab = 'login') => {
     setModal({ open: true, tab });
