@@ -1,0 +1,14 @@
+# Copy to deploy.config and edit (deploy.config is gitignored — do not commit secrets)
+#   cp scripts/deploy.config.example scripts/deploy.config
+
+# Server SSH host (hostname or IP)
+DEPLOY_HOST=43.160.235.100
+
+# SSH login user
+DEPLOY_USER=root
+
+# Project root on the server (must exist, e.g. mkdir -p /home/project/task)
+DEPLOY_PATH=/home/project/task
+
+# Optional: path to private key; if empty, default ssh config applies (~/.ssh/config Host entries)
+# DEPLOY_SSH_KEY=~/.ssh/id_ed25519

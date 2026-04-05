@@ -1,0 +1,8 @@
+# Blockchain demo UI / receipt polling (Blockchain page).
+# Edit values here — no rebuild of backend-ts required; restart Vite if dev server cached the module.
+
+transactionReceipt:
+  # How often wagmi polls eth_getTransactionReceipt (ms).
+  pollingIntervalMs: 2000
+  # If no receipt after this long while still waiting, show a timeout hint + explorer link (ms).
+  confirmationTimeoutMs: 90000

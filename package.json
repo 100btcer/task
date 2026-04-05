@@ -1,0 +1,24 @@
+{
+  "name": "task",
+  "private": true,
+  "description": "Technical test: API + blockchain frontend with local mock API",
+  "scripts": {
+    "bootstrap": "npm install && npm run setup",
+    "setup": "npm run install:all && node scripts/setup.cjs",
+    "dev": "concurrently -k -n api,web -c cyan,magenta \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:web": "npm run dev --prefix frontend",
+    "dev:api": "npm start --prefix backend-ts",
+    "dev:api-go": "cd backend-go && go run .",
+    "start": "npm run dev",
+    "build": "npm run build --prefix frontend",
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:build": "cd frontend && VITE_API_BASE_URL=/api npm run build",
+    "install:frontend": "npm install --prefix frontend",
+    "install:api": "npm install --prefix backend-ts",
+    "install:all": "npm install --prefix frontend && npm install --prefix backend-ts",
+    "install:go": "cd backend-go && go mod download"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

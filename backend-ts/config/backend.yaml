@@ -1,0 +1,14 @@
+# backend-ts — no secrets (use backend-ts/.env for AUTH_JWT_SECRET, PORT, etc.).
+# CORS: same shape as backend-go. Use "*" or empty list (via env) to allow any Origin (reflected).
+# Override allowlist: CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+cors:
+  origins:
+    - "*"
+
+database:
+  # Relative to the backend-ts package directory (sibling ../store is the repo default).
+  path: ../store/app.sqlite
+
+api:
+  # Hint for docs/tooling only; the server reads PORT from backend-ts/.env.
+  defaultPort: 3000

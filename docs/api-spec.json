@@ -1,0 +1,574 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Tasks API",
+    "description": "Reference API for the technical test frontend. Base path includes `/api`. **Tasks** (`/tasks`, `/auth`) power API Demo; **blockchain** (`/blockchain/transfer-history`) persists Blockchain Demo transfer rows in shared SQLite — public, no Bearer.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:3000/api",
+      "description": "Node.js (backend-ts) — default port 3000"
+    },
+    {
+      "url": "http://127.0.0.1:3001/api",
+      "description": "Go (backend-go) — default port 3001"
+    }
+  ],
+  "security": [],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Register",
+        "operationId": "register",
+        "description": "Create an account. Returns a Bearer token for write operations.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CredentialRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registered",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "409": {
+            "description": "Username taken",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login",
+        "operationId": "login",
+        "description": "Returns a Bearer token. Use `Authorization: Bearer <token>` on all `/tasks` requests (including GET).",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CredentialRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "operationId": "getHealth",
+        "description": "Liveness probe. Public — no Bearer token required.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is up",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks": {
+      "get": {
+        "summary": "List tasks",
+        "operationId": "listTasks",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated task list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TaskListResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a task",
+        "operationId": "createTask",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTaskRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Task" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/{taskId}": {
+      "get": {
+        "summary": "Get task by id",
+        "operationId": "getTask",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "taskId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64", "minimum": 1 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Task" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Partially update a task",
+        "operationId": "patchTask",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "taskId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64", "minimum": 1 } }
+        ],
+        "requestBody": {
+          "description": "Include only fields to change (e.g. `{ \"completed\": true }`). Omitted keys are left unchanged.",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PatchTaskRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated task",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Task" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a task",
+        "operationId": "deleteTask",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "taskId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64", "minimum": 1 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["ok"],
+                  "properties": { "ok": { "type": "boolean", "enum": [true] } }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/blockchain/transfer-history": {
+      "get": {
+        "summary": "List blockchain transfer history",
+        "operationId": "listBlockchainTransferHistory",
+        "description": "Blockchain Demo: rows stored in shared SQLite (`blockchain_transfer_history`). Public — no Bearer. Scoped by `chainId` and signer `wallet` (0x + 40 hex).",
+        "security": [],
+        "parameters": [
+          {
+            "name": "chainId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 },
+            "description": "EVM chain id (e.g. 137)"
+          },
+          {
+            "name": "wallet",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+            "description": "Connected wallet address (lowercased when stored)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer rows, newest first",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BlockchainTransferHistoryListResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid query params",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Append blockchain transfer history rows",
+        "operationId": "appendBlockchainTransferHistory",
+        "description": "Inserts rows with `INSERT OR IGNORE` per `(chainId, wallet, tx hash)`. Max 200 items per request. **backend-ts** returns **503** if the server runs without SQLite (in-memory test mode).",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BlockchainTransferHistoryAppendRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Batch accepted (duplicates ignored)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BlockchainTransferHistoryAppendResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable (Node in-memory mode only)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Clear blockchain transfer history for a wallet on a chain",
+        "operationId": "clearBlockchainTransferHistory",
+        "description": "Deletes all rows for the given `chainId` and `wallet`. Public — no Bearer.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "chainId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          },
+          {
+            "name": "wallet",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cleared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["ok"],
+                  "properties": { "ok": { "type": "boolean", "enum": [true] } }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid query params",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable (Node in-memory mode only)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "User session JWT from POST /auth/login or /auth/register (HS256, claim `typ: user`). Required for every /tasks operation, including GET list and GET by id. Tasks are scoped to the authenticated user."
+      }
+    },
+    "schemas": {
+      "CredentialRequest": {
+        "type": "object",
+        "required": ["username", "password"],
+        "properties": {
+          "username": { "type": "string", "minLength": 1 },
+          "password": { "type": "string", "minLength": 1 }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "required": ["token", "username"],
+        "properties": {
+          "token": { "type": "string" },
+          "username": { "type": "string" }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": ["ok", "service"],
+        "properties": {
+          "ok": { "type": "boolean", "enum": [true] },
+          "service": { "type": "string", "example": "tasks-api" }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "required": ["id", "userId", "title", "completed", "createdAt", "updatedAt"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "userId": { "type": "integer", "format": "int64", "description": "Owner user id (from users table)" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "completed": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TaskListResponse": {
+        "type": "object",
+        "required": ["items", "total", "page", "limit"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Task" } },
+          "total": { "type": "integer" },
+          "page": { "type": "integer" },
+          "limit": { "type": "integer" }
+        }
+      },
+      "CreateTaskRequest": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "PatchTaskRequest": {
+        "type": "object",
+        "description": "All properties are optional — send only what you want to update. For status toggle, `{ \"completed\": true }` or `{ \"completed\": false }` is enough.",
+        "properties": {
+          "title": { "type": "string", "description": "New title; omit if unchanged." },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "New description; omit if unchanged, null to clear."
+          },
+          "completed": { "type": "boolean", "description": "Done flag; omit if unchanged." }
+        },
+        "example": { "completed": true }
+      },
+      "BlockchainTransferHistoryItem": {
+        "type": "object",
+        "required": ["hash", "to", "amountHuman", "amountRaw", "symbol", "asset", "status", "timestamp"],
+        "properties": {
+          "hash": { "type": "string", "description": "Transaction hash (0x + 64 hex)" },
+          "to": { "type": "string", "description": "Recipient (0x + 40 hex)" },
+          "amountHuman": { "type": "string" },
+          "amountRaw": { "type": "string", "description": "On-chain amount in smallest units (decimal string)" },
+          "symbol": { "type": "string" },
+          "asset": { "type": "string", "enum": ["native", "erc20"] },
+          "status": { "type": "string", "enum": ["success", "reverted", "failed"] },
+          "blockNumber": { "type": "string", "nullable": true, "description": "Block number as decimal string when known" },
+          "timestamp": { "type": "number", "description": "Client timestamp in milliseconds" }
+        }
+      },
+      "BlockchainTransferHistoryListResponse": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BlockchainTransferHistoryItem" }
+          }
+        }
+      },
+      "BlockchainTransferHistoryAppendRequest": {
+        "type": "object",
+        "required": ["chainId", "walletAddress", "items"],
+        "properties": {
+          "chainId": { "type": "integer", "format": "int64", "minimum": 1 },
+          "walletAddress": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 200,
+            "items": { "$ref": "#/components/schemas/BlockchainTransferHistoryItem" }
+          }
+        }
+      },
+      "BlockchainTransferHistoryAppendResponse": {
+        "type": "object",
+        "required": ["ok", "inserted"],
+        "properties": {
+          "ok": { "type": "boolean", "enum": [true] },
+          "inserted": { "type": "integer", "description": "Number of rows in the request batch (duplicates still return 201)" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "code": { "type": "string" },
+          "status": { "type": "integer" }
+        }
+      }
+    }
+  }
+}

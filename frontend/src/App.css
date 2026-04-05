@@ -1,0 +1,115 @@
+@keyframes app-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-spinner {
+  animation: app-spinner-rotate 0.75s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-spinner {
+    animation: none;
+    border-top-color: #64748b !important;
+  }
+}
+
+/* Match previous horizontal inset; no top padding so the nav stays flush under the viewport top (body is no longer flex-centered). */
+#root {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1280px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 0 2rem;
+  text-align: initial;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Hover / active for enabled buttons (brightness works alongside inline backgrounds & shadows) */
+#root button:not(:disabled):not([aria-disabled='true']) {
+  transition: filter 0.12s ease, opacity 0.12s ease;
+}
+
+#root button:not(:disabled):not([aria-disabled='true']):hover {
+  filter: brightness(0.93);
+}
+
+#root button:not(:disabled):not([aria-disabled='true']):active {
+  filter: brightness(0.86);
+}
+
+/* Disabled: no hover/active change; dimmed vs enabled (opacity works on filled + outline buttons) */
+#root button:disabled,
+#root button[aria-disabled='true'] {
+  cursor: not-allowed;
+  filter: none;
+  opacity: 0.5;
+}
+
+#root button:disabled:hover,
+#root button:disabled:active,
+#root button[aria-disabled='true']:hover,
+#root button[aria-disabled='true']:active {
+  filter: none;
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root button:not(:disabled):not([aria-disabled='true']) {
+    transition: none;
+  }
+}
+
+/* Modal close (×): minimal, no border; hover uses background (not filter) */
+#root button.app-modal-close:not(:disabled) {
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+#root button.app-modal-close:not(:disabled):hover {
+  filter: none;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+#root button.app-modal-close:not(:disabled):active {
+  filter: none;
+  background: #e2e8f0;
+  color: #475569;
+}

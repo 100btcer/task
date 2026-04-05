@@ -1,0 +1,12 @@
+# backend-go — no secrets (use env / .env for AUTH_JWT_SECRET, PORT, etc.).
+server:
+  port: 3001
+  mode: debug
+
+cors:
+  origins:
+    - "*"
+
+database:
+  # Relative to the backend-go package directory.
+  path: ../store/app.sqlite
