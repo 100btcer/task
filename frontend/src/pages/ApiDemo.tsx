@@ -764,7 +764,9 @@ export function ApiDemo() {
                       >
                         Delete
                       </button>
-                      {apiAuthHint?.kind === 'list-row' &&
+                      {typeof apiAuthHint === 'object' &&
+                        apiAuthHint !== null &&
+                        apiAuthHint.kind === 'list-row' &&
                         apiAuthHint.taskId === task.id &&
                         !isAuthenticated && (
                           <span

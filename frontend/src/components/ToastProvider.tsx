@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useId,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
@@ -49,12 +50,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     window.setTimeout(() => dismiss(id), AUTO_DISMISS_MS);
   }, [baseId, dismiss]);
 
-  const value: ToastContextValue = {
-    success: (message) => push(message, 'success'),
-    error: (message) => push(message, 'error'),
-    info: (message) => push(message, 'info'),
-    clearAll,
-  };
+  const success = useCallback((message: string) => push(message, 'success'), [push]);
+  const errorFn = useCallback((message: string) => push(message, 'error'), [push]);
+  const info = useCallback((message: string) => push(message, 'info'), [push]);
+
+  const value = useMemo<ToastContextValue>(
+    () => ({
+      success,
+      error: errorFn,
+      info,
+      clearAll,
+    }),
+    [success, errorFn, info, clearAll]
+  );
 
   return (
     <ToastContext.Provider value={value}>
