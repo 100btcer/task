@@ -1,111 +1,239 @@
 {
   "info": {
-    "name": "Tasks API (technical test)",
-    "description": "Aligned with docs/api-spec.json. Set `baseUrl`. Call **Register** or **Login**, copy `token` into collection variable **`bearerToken`** for POST/PATCH/DELETE.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "name": "Tasks API",
+    "description": "Mirrors **`docs/api-spec.json`** (OpenAPI 3.0.3). Same paths as Swagger UI at **`/api/docs`**.\n\n### Setup\n1. Set **`baseUrl`** to your API root including `/api` (default: Node **backend-ts** `http://127.0.0.1:3000/api`). For **backend-go**, use `http://127.0.0.1:3001/api` or **`{{baseUrlGo}}`**.\n2. Run **Auth → Register** or **Login**; copy **`token`** into collection variable **`bearerToken`**.\n3. All **Tasks** requests need **`Authorization: Bearer {{bearerToken}}`**, including **GET** list and **GET** by id — tasks are scoped to the JWT user.\n4. **Blockchain** routes are public (no Bearer). Requires SQLite on the server (Node in-memory mode returns **503** for writes).\n\n### Variables\n| Variable | Use |\n|----------|-----|\n| `baseUrl` | Node API base (`.../api`) |\n| `baseUrlGo` | Go API base (`.../api`) |\n| `bearerToken` | JWT from register/login |\n| `taskId` | Path id for task CRUD |\n| `page`, `limit` | Task list pagination |\n| `chainId`, `walletAddress` | Blockchain history query / body |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.1.0"
   },
   "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:3000/api" },
+    { "key": "baseUrlGo", "value": "http://127.0.0.1:3001/api" },
+    { "key": "bearerToken", "value": "" },
+    { "key": "taskId", "value": "1" },
+    { "key": "page", "value": "1" },
+    { "key": "limit", "value": "20" },
+    { "key": "chainId", "value": "137" },
     {
-      "key": "baseUrl",
-      "value": "http://127.0.0.1:3000/api"
-    },
-    {
-      "key": "taskId",
-      "value": "1"
-    },
-    {
-      "key": "bearerToken",
-      "value": ""
+      "key": "walletAddress",
+      "value": "0x0000000000000000000000000000000000000001"
     }
   ],
   "item": [
     {
-      "name": "Health",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{baseUrl}}/health"
-      }
+      "name": "Discovery",
+      "description": "Machine-readable spec (optional). **`servers`** in the live JSON may reflect the request host when using backend-ts or backend-go.",
+      "item": [
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/openapi.json",
+            "description": "**GET** merged spec (same contract as repo **`docs/api-spec.json`**)."
+          },
+          "response": []
+        }
+      ]
     },
     {
-      "name": "Register",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"username\": \"alice\",\n  \"password\": \"secret12\"\n}"
+      "name": "Public",
+      "description": "No **Bearer** token.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "**operationId:** `getHealth`\n\nLiveness probe. **200** → `HealthResponse`: `ok`, `service`; with SQLite backends also `storage`, `database`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "No **Bearer** on these routes. Returns **`AuthResponse`**: `token`, `username`.\n\n**Credential rules (implementations):** username 2–32 chars `[a-z0-9_]`; password 6–128 chars.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice\",\n  \"password\": \"secret12\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "**operationId:** `register`\n\nCreate an account. **201** Created.\n\n**409** — username taken. **400** — validation error.\n\nCopy **`token`** → collection variable **`bearerToken`**."
+          },
+          "response": []
         },
-        "url": "{{baseUrl}}/auth/register",
-        "description": "2–32 char username: lowercase letters, digits, underscore. Password 6–128 chars. Paste response `token` into `bearerToken`."
-      }
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice\",\n  \"password\": \"secret12\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "**operationId:** `login`\n\n**200** OK with JWT. **401** invalid credentials. **400** validation.\n\nUse **`Authorization: Bearer <token>`** on **every** `/tasks` call (including GET)."
+          },
+          "response": []
+        }
+      ]
     },
     {
-      "name": "Login",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"username\": \"alice\",\n  \"password\": \"secret12\"\n}"
+      "name": "Tasks",
+      "description": "**Security:** `bearerAuth` — user JWT (`typ: user`, `sub` = username). Required for **all** methods under `/tasks`, including **GET** list and **GET** by id.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          { "key": "token", "value": "{{bearerToken}}", "type": "string" }
+        ]
+      },
+      "item": [
+        {
+          "name": "List tasks",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{bearerToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tasks?page={{page}}&limit={{limit}}",
+            "description": "**operationId:** `listTasks`\n\n**200** → `TaskListResponse`: `items`, `total`, `page`, `limit`.\n\n**401** — missing or invalid Bearer."
+          },
+          "response": []
         },
-        "url": "{{baseUrl}}/auth/login",
-        "description": "Paste response `token` into collection variable `bearerToken` for writes."
-      }
-    },
-    {
-      "name": "List tasks",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{baseUrl}}/tasks?page=1&limit=20"
-      }
-    },
-    {
-      "name": "Create task",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"From Postman\",\n  \"description\": \"optional\"\n}"
+        {
+          "name": "Create task",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{bearerToken}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"From Postman\",\n  \"description\": \"optional description\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks",
+            "description": "**operationId:** `createTask`\n\n**CreateTaskRequest:** `title` required; `description` optional.\n\n**201** → `Task`. **400** / **401**."
+          },
+          "response": []
         },
-        "url": "{{baseUrl}}/tasks"
-      }
-    },
-    {
-      "name": "Get task by id",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{baseUrl}}/tasks/{{taskId}}"
-      }
-    },
-    {
-      "name": "Patch task",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"completed\": true\n}"
+        {
+          "name": "Get task by id",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{bearerToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "description": "**operationId:** `getTask`\n\nPath **`taskId`**: integer ≥ 1.\n\n**200** → `Task`. **404** not found (or not owned). **401**."
+          },
+          "response": []
         },
-        "url": "{{baseUrl}}/tasks/{{taskId}}"
-      }
+        {
+          "name": "Patch task (partial update)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{bearerToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completed\": true\n}"
+            },
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "description": "**operationId:** `patchTask`\n\n**PatchTaskRequest:** all fields optional — send only what changes.\n\nExamples:\n- Toggle done: `{ \"completed\": true }`\n- Rename: `{ \"title\": \"New title\" }`\n- Clear description: `{ \"description\": null }`\n\n**200** → `Task`. **404** / **401**."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete task",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{bearerToken}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "description": "**operationId:** `deleteTask`\n\n**200** → `{ \"ok\": true }`. **404** / **401**."
+          },
+          "response": []
+        }
+      ]
     },
     {
-      "name": "Delete task",
-      "request": {
-        "method": "DELETE",
-        "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
-        "url": "{{baseUrl}}/tasks/{{taskId}}"
-      }
+      "name": "Blockchain transfer history",
+      "description": "Stored in shared SQLite table **`blockchain_transfer_history`**. **Public** — no Bearer.\n\n**GET** requires query **`chainId`** + **`wallet`** (`0x` + 40 hex). **POST** batch append (max 200 items, `INSERT OR IGNORE` per tx hash). **DELETE** clears rows for wallet on chain.\n\n**503** if Node runs without SQLite (in-memory test mode).",
+      "item": [
+        {
+          "name": "List transfer history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/blockchain/transfer-history?chainId={{chainId}}&wallet={{walletAddress}}",
+            "description": "**operationId:** `listBlockchainTransferHistory`\n\n**200** → `BlockchainTransferHistoryListResponse` (`items`, newest first).\n\n**400** — missing/invalid query."
+          },
+          "response": []
+        },
+        {
+          "name": "Append transfer history",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chainId\": 137,\n  \"walletAddress\": \"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0\",\n  \"items\": [\n    {\n      \"hash\": \"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n      \"to\": \"0x1111111111111111111111111111111111111111\",\n      \"amountHuman\": \"1.0\",\n      \"amountRaw\": \"1000000\",\n      \"symbol\": \"USDT\",\n      \"asset\": \"erc20\",\n      \"status\": \"success\",\n      \"blockNumber\": \"12345678\",\n      \"timestamp\": 1700000000000\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/blockchain/transfer-history",
+            "description": "**operationId:** `appendBlockchainTransferHistory`\n\n**BlockchainTransferHistoryAppendRequest:** `chainId`, `walletAddress`, `items` (1–200). Each item: **`BlockchainTransferHistoryItem`** — required `hash`, `to`, `amountHuman`, `amountRaw`, `symbol`, `asset` (`native`|`erc20`), `status` (`success`|`reverted`|`failed`), `timestamp` (ms); optional `blockNumber`.\n\n**201** → `{ ok, inserted }`. **400** / **503**."
+          },
+          "response": []
+        },
+        {
+          "name": "Clear transfer history",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/blockchain/transfer-history?chainId={{chainId}}&wallet={{walletAddress}}",
+            "description": "**operationId:** `clearBlockchainTransferHistory`\n\nDeletes all rows for **`chainId`** + **`wallet`**.\n\n**200** → `{ \"ok\": true }`. **400** / **503**."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
