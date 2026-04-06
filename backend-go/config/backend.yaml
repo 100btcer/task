@@ -8,5 +8,5 @@ cors:
     - "*"
 
 database:
-  # Relative to the backend-go package directory.
-  path: ../store/app.sqlite
+  # Monorepo root: same file as backend-ts (`store/` next to `docs/`).
+  path: store/app.sqlite

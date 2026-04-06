@@ -39,7 +39,7 @@ func main() {
 
 	go func() {
 		log.Printf("Tasks API (Go) → http://127.0.0.1:%d/api/tasks", port)
-		log.Printf("SQLite: %s  (SQLITE_PATH → backend-go/config/backend.yaml → ../store/app.sqlite)", sc.DBPath)
+		log.Printf("SQLite: %s  (SQLITE_PATH → backend-go/config/backend.yaml → store/app.sqlite)", sc.DBPath)
 		log.Printf("Swagger UI: http://127.0.0.1:%d/api/docs  |  OpenAPI JSON: /api/openapi.json", port)
 		log.Printf("Health: http://127.0.0.1:%d/api/health", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

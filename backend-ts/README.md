@@ -6,7 +6,7 @@ Reference backend for the technical test: implements **`docs/api-spec.json`** (p
 
 - **SQLite** path resolution (see **`docs/BACKEND_SHARED_CONTRACT.md`**):
   1. **`SQLITE_PATH`** in `.env` (highest priority)
-  2. **`backend-ts/config/backend.yaml`** → `database.path` (relative to **`backend-ts/`**)
+  2. **`backend-ts/config/backend.yaml`** → `database.path` (default **`store/app.sqlite`** relative to **monorepo root**, same as **backend-go**)
   3. Default **`store/app.sqlite`** under the monorepo root
 - **Canonical DDL:** **`docs/sqlite/schema.sql`** — applied on every startup (idempotent `CREATE IF NOT EXISTS` + `schema_migrations`).
 - WAL mode is enabled. Parent directories for the DB file are created automatically.

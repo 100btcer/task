@@ -54,13 +54,22 @@ export function parseDatabasePathYaml(content) {
 
 /**
  * Absolute path to the SQLite file.
- * Precedence: **`SQLITE_PATH`** env → **`backend-ts/config/backend.yaml`** `database.path` (relative to `backend-ts/`) → `../store/app.sqlite` from package via default under repo root.
+ * Precedence: **`SQLITE_PATH`** env → **`backend-ts/config/backend.yaml`** `database.path` → default **`store/app.sqlite`** under repo root.
+ * YAML paths starting with **`../`** resolve from **`backend-ts/`**; all other relative paths resolve from the **monorepo root** (e.g. **`store/app.sqlite`**).
  */
 export function resolveSqlitePath() {
   const fromEnv = process.env.SQLITE_PATH?.trim();
   if (fromEnv) return path.resolve(fromEnv);
   const fromYaml = readDatabasePathFromPackageConfig();
-  if (fromYaml) return path.resolve(packageRoot, fromYaml);
+  if (fromYaml) {
+    const p = fromYaml.trim();
+    if (path.isAbsolute(p)) return path.resolve(p);
+    const norm = p.replace(/\\/g, '/');
+    if (norm.startsWith('../') || norm === '..') {
+      return path.resolve(packageRoot, p);
+    }
+    return path.resolve(repoRoot, p);
+  }
   return path.resolve(repoRoot, DEFAULT_DB_RELATIVE);
 }
 

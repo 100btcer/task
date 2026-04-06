@@ -68,7 +68,8 @@ if [[ -f "$TS_DIR/.env" ]]; then
 fi
 
 GO_PORT="${BACKEND_GO_PORT:-3001}"
-GO_SQLITE_PATH="${BACKEND_GO_SQLITE_PATH:-${STORE_DIR}/app-go.sqlite}"
+# Same file as Node (backend-ts): ${DEPLOY_PATH}/store/app.sqlite — override with BACKEND_GO_SQLITE_PATH if needed.
+GO_SQLITE_PATH="${BACKEND_GO_SQLITE_PATH:-${STORE_DIR}/app.sqlite}"
 GO_STATIC_DIR="${BACKEND_GO_STATIC_DIR:-${FRONTEND_DIST_DIR}}"
 
 if command -v pm2 >/dev/null 2>&1; then

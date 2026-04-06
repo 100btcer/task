@@ -19,7 +19,7 @@ Cross-language details: **`docs/BACKEND_SHARED_CONTRACT.md`**.
 
 - **SQLite path** (see **`docs/BACKEND_SHARED_CONTRACT.md`**):
   1. **`SQLITE_PATH`** (highest priority)
-  2. **`config/backend.yaml`** → `database.path` (relative to **`backend-go/`**; default **`../store/app.sqlite`** → repo **`store/app.sqlite`**)
+  2. **`config/backend.yaml`** → `database.path` (default **`store/app.sqlite`** relative to **monorepo root**, same as **backend-ts**)
   3. Fallback: **`store/app.sqlite`** under monorepo root
 - **Canonical DDL:** **`docs/sqlite/schema.sql`** (repo root) — executed on startup (idempotent `CREATE IF NOT EXISTS` + `schema_migrations`). Line comments are stripped before splitting statements so semicolons inside comments do not break parsing.
 - **WAL** and **foreign_keys** are enabled via the SQLite connection string.

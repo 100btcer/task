@@ -10,7 +10,8 @@ import (
 const defaultRelative = "store" + string(filepath.Separator) + "app.sqlite"
 
 // Resolve returns the absolute path to the SQLite file.
-// Order: SQLITE_PATH env → backend-go/config/backend.yaml `database.path` (relative to packageRoot) → repoRoot/store/app.sqlite.
+// Order: SQLITE_PATH env → backend-go/config/backend.yaml `database.path` → repoRoot/store/app.sqlite.
+// YAML paths starting with ".." resolve from packageRoot; other relative paths resolve from repoRoot (e.g. store/app.sqlite).
 func Resolve(packageRoot, repoRoot string) (string, error) {
 	if p := strings.TrimSpace(os.Getenv("SQLITE_PATH")); p != "" {
 		if filepath.IsAbs(p) {
@@ -27,7 +28,11 @@ func Resolve(packageRoot, repoRoot string) (string, error) {
 	if filepath.IsAbs(rel) {
 		return filepath.Clean(rel), nil
 	}
-	return filepath.Abs(filepath.Join(packageRoot, rel))
+	trim := strings.TrimSpace(rel)
+	if strings.HasPrefix(trim, "..") {
+		return filepath.Abs(filepath.Join(packageRoot, rel))
+	}
+	return filepath.Abs(filepath.Join(repoRoot, rel))
 }
 
 func readDatabasePathFromYAML(path string) string {

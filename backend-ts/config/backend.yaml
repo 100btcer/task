@@ -6,8 +6,8 @@ cors:
     - "*"
 
 database:
-  # Relative to the backend-ts package directory (sibling ../store is the repo default).
-  path: ../store/app.sqlite
+  # Monorepo root: same file as backend-go (`store/` next to `docs/`).
+  path: store/app.sqlite
 
 api:
   # Hint for docs/tooling only; the server reads PORT from backend-ts/.env.

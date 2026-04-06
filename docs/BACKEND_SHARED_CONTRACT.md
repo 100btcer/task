@@ -12,7 +12,7 @@ Each backend keeps its **own** non-secret YAML under its package: **`backend-ts/
 | Priority | Source | Notes |
 |----------|--------|--------|
 | 1 (highest) | Environment variable **`SQLITE_PATH`** | Absolute or process-relative path to the SQLite file. Must be supported by Go. |
-| 2 | **`backend-ts/config/backend.yaml`** or **`backend-go/config/backend.yaml`** → `database.path` | Path **relative to that backend’s package directory** (e.g. `../store/app.sqlite`). |
+| 2 | **`backend-ts/config/backend.yaml`** or **`backend-go/config/backend.yaml`** → `database.path` | Default **`store/app.sqlite`** — **relative to the monorepo root** (same folder as `docs/`). Paths starting with **`../`** are relative to that **backend’s package directory** instead. |
 | 3 | Default | **`store/app.sqlite`** under the **monorepo root** (same folder that contains `docs/` and `store/`). |
 
 **Secrets** (JWT signing, optional static bearer, etc.) are **not** in those YAML files. Use environment variables (or process manager / k8s secrets): **`AUTH_JWT_SECRET`** / **`API_JWT_SECRET`** must match between backends if tokens should be interchangeable. Node reads **`backend-ts/.env`**; Go reads the process environment (optionally set from **`backend-go/.env`** via your shell or a loader).
@@ -23,7 +23,7 @@ Optional field **`api.defaultPort`** in **`backend-ts/config/backend.yaml`** is 
 
 ## 2. Database file and concurrency
 
-- Single SQLite file (default **`store/app.sqlite`** at repo root when using default `../store/app.sqlite` in each backend’s `backend.yaml`).
+- Single SQLite file (default **`store/app.sqlite`** at repo root — both backends use the same `database.path` in their `backend.yaml`).
 - **WAL** mode is enabled by both backends on open; do not run two writers on the same file at once.
 - **Do not commit** `*.sqlite` (see repo `.gitignore`).
 
